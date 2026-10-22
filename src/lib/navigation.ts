@@ -34,6 +34,6 @@ export function buildNavigation(actor: Actor, school: ActorSchool | null): NavIt
 /** Where to land after sign-in: the most senior home the actor has. */
 export function homeFor(actor: Actor, school: ActorSchool | null): string {
   const nav = buildNavigation(actor, school);
-  const first = nav.find((n) => n.group === "Home") ?? nav[0];
+  const first = nav.find((n) => n.group === "Home") ?? nav.find((n) => n.href === "/app/fees") ?? nav[0];
   return first?.href ?? "/app/no-access";
 }

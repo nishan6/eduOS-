@@ -31,7 +31,7 @@ export function EmptyState({ icon: Icon, title, description, action }: { icon: L
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
       <div className="rounded-full bg-surface-muted p-3 text-muted-foreground"><Icon className="size-5" aria-hidden /></div>
-      <p className="text-sm font-medium">{title}</p>
+      <h2 className="text-sm font-medium">{title}</h2>
       {description && <p className="max-w-sm text-sm text-muted-foreground">{description}</p>}
       {action}
     </div>

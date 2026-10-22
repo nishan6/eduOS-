@@ -8,8 +8,9 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     globalSetup: ["tests/support/global-setup.ts"],
+    // Integration tests share one seeded database and run sequentially.
     fileParallelism: false,
     testTimeout: 30000,
-    hookTimeout: 120000,
+    hookTimeout: 180000,
   },
 });

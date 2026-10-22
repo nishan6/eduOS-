@@ -6,9 +6,7 @@ import { createStudent, enrollStudent, linkGuardian, type CreateStudentInput } f
 import { inviteGuardian } from "@/modules/identity/service";
 
 export async function createStudentAction(input: CreateStudentInput) {
-  const r = await runAction(async (actor) => (await createStudent(actor, input)).student.id, "Student created.");
-  if (r.ok) revalidatePath("/app/students");
-  return r;
+  return runAction(async (actor) => (await createStudent(actor, input)).student.id, "Student created.");
 }
 
 export async function linkGuardianAction(input: Parameters<typeof linkGuardian>[1]) {
