@@ -34,6 +34,7 @@ export const T = {
   cashierSps: "cashier.sps@demo.eduos.test",
   cashierSvl: "cashier.svl@demo.eduos.test",
   admissionsSps: "admissions.sps@demo.eduos.test",
+  helpdeskSps: "helpdesk.sps@demo.eduos.test",
   parent: "parent@demo.eduos.test",
   parent2: "parent2@demo.eduos.test",
 };

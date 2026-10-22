@@ -7,6 +7,8 @@ import { studentAttendanceHistory } from "@/modules/attendance/service";
 import { studentFeeAccount } from "@/modules/fees/service";
 import { studentHomework } from "@/modules/homework/service";
 import { studentResults } from "@/modules/exams/service";
+import { studentTimetable } from "@/modules/timetable/service";
+import { TimetableGrid } from "@/components/timetable-grid";
 import { formatPaise } from "@/lib/money";
 import { formatDate, schoolToday } from "@/lib/dates";
 import { formatRate } from "@/modules/attendance/calc";
@@ -24,9 +26,9 @@ export default async function ChildPage({ params }: { params: Promise<{ studentI
   const actor = await requireActor();
   const profile = await orNull(getStudentProfile(actor, studentId));
   if (!profile || profile.access !== "family") notFound();
-  const [attendance, fees, homework, results] = await Promise.all([
+  const [attendance, fees, homework, results, timetable] = await Promise.all([
     orNull(studentAttendanceHistory(actor, studentId, 60)), orNull(studentFeeAccount(actor, studentId)),
-    orNull(studentHomework(actor, studentId)), orNull(studentResults(actor, studentId)),
+    orNull(studentHomework(actor, studentId)), orNull(studentResults(actor, studentId)), orNull(studentTimetable(actor, studentId)),
   ]);
   const today = schoolToday();
   const s = profile.student;
@@ -79,6 +81,12 @@ export default async function ChildPage({ params }: { params: Promise<{ studentI
           </CardContent>
         </Card>
       </div>
+      {timetable && timetable.slots.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader><div><CardTitle>Class timetable</CardTitle><CardDescription>{timetable.section.name}</CardDescription></div></CardHeader>
+          <TimetableGrid slots={timetable.slots} grid={timetable.grid} />
+        </Card>
+      )}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader><div><CardTitle>Attendance history</CardTitle><CardDescription>Submitted daily attendance, most recent first.</CardDescription></div></CardHeader>

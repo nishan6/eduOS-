@@ -25,14 +25,19 @@ Legend: ✅ done and tested · 🟡 partial · ⬜ not started
 - 🟡 Reconciliation: "mark verified" per payment; bank statement import pending
 - ⬜ Concessions/discounts with approval, refunds, credit notes, advance payments
 
-## Milestone D — Academic and operational expansion 🟡 (core shipped)
+## Milestone D — Academic and operational expansion ✅
 Done:
 - Homework: teachers set and cancel homework for their sections; parents see it on the child page and get a notification.
 - Exams: principal creates an exam (papers per section × subject), teachers enter and submit marks with validation, principal reopens with a reason, publishes when all papers are in. Report cards for staff and parents (published only), printable.
 - Admissions: enquiry pipeline (New → Contacted → Visit → Applied → Offered → Admitted/Lost), follow-up dates, activity log, duplicate detection, one-step conversion into an enrolled student with guardian.
 - Notices: send to all parents, one class or one section (teachers: own sections only); in-app plus email adapter; parent notices page.
 
-Remaining: per-board grading configuration and co-scholastic areas, timetable, events calendar, generic approvals engine, helpdesk tickets, parent-teacher messaging.
+- Grading: CBSE or AP state-board scale per school, copied onto each exam.
+- Timetable: school periods and breaks, per-class weekly grid, teacher double-booking blocked, "My week" for teachers, class timetable for parents.
+- Calendar: holidays, exams, events and meetings; staff-only or everyone; parents see their children's schools.
+- Helpdesk: parent and staff requests, school queue, internal notes, assignment, status, notifications.
+
+Deferred: co-scholastic areas and term-weighted final results, generic approvals engine, direct parent-teacher messaging, substitution management.
 
 ## Milestone E — Specialist modules ⬜
 Transport, hostel, HR (staff attendance, leave), Tally export, payment gateway, SMS/WhatsApp adapters, biometric adapter.

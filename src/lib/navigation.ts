@@ -2,7 +2,8 @@ import { canInOrganization, canSchoolWide, hasAnywhere, hasFamilyPermission, sec
 
 export type NavIcon =
   | "home" | "family" | "teacher" | "principal" | "owner" | "students" | "attendance" | "fees" | "finance"
-  | "school" | "users" | "audit" | "outbox" | "bell" | "homework" | "exams" | "admissions" | "notices";
+  | "school" | "users" | "audit" | "outbox" | "bell" | "homework" | "exams" | "admissions" | "notices"
+  | "timetable" | "calendar" | "helpdesk" | "support";
 
 export type NavItem = { href: string; label: string; icon: NavIcon; group: "Home" | "Operations" | "Settings" };
 
@@ -17,6 +18,8 @@ export function buildNavigation(actor: Actor, school: ActorSchool | null): NavIt
   if (hasFamilyPermission(actor, "family.read")) {
     items.push({ href: "/app/family", label: "My children", icon: "family", group: "Home" });
     items.push({ href: "/app/family/notices", label: "Notices", icon: "notices", group: "Home" });
+    items.push({ href: "/app/family/calendar", label: "School calendar", icon: "calendar", group: "Home" });
+    if (hasFamilyPermission(actor, "tickets.create")) items.push({ href: "/app/support", label: "Help & requests", icon: "support", group: "Home" });
   }
 
   if (sid && hasAnywhere(actor, "students.read", sid)) items.push({ href: "/app/students", label: "Students", icon: "students", group: "Operations" });
@@ -27,6 +30,13 @@ export function buildNavigation(actor: Actor, school: ActorSchool | null): NavIt
   if (sid && hasAnywhere(actor, "exams.read", sid)) items.push({ href: "/app/exams", label: "Exams & marks", icon: "exams", group: "Operations" });
   if (sid && canSchoolWide(actor, "admissions.read", sid)) items.push({ href: "/app/admissions", label: "Admissions", icon: "admissions", group: "Operations" });
   if (sid && hasAnywhere(actor, "announcements.send", sid)) items.push({ href: "/app/notices", label: "Notices", icon: "notices", group: "Operations" });
+  if (sid && canSchoolWide(actor, "academics.read", sid)) {
+    items.push({ href: "/app/timetable", label: "Timetable", icon: "timetable", group: "Operations" });
+    items.push({ href: "/app/calendar", label: "Calendar", icon: "calendar", group: "Operations" });
+  }
+  if (sid && canSchoolWide(actor, "tickets.manage", sid)) items.push({ href: "/app/helpdesk", label: "Helpdesk", icon: "helpdesk", group: "Operations" });
+  if (sid && canSchoolWide(actor, "tickets.create", sid) && !items.some((i) => i.href === "/app/support"))
+    items.push({ href: "/app/support", label: "My requests", icon: "support", group: "Operations" });
   if (sid && canSchoolWide(actor, "fees.read", sid)) items.push({ href: "/app/fees", label: "Fees", icon: "fees", group: "Operations" });
   if (sid && canSchoolWide(actor, "finance.ledger.read", sid)) items.push({ href: "/app/finance", label: "Ledger", icon: "finance", group: "Operations" });
 
@@ -41,6 +51,6 @@ export function buildNavigation(actor: Actor, school: ActorSchool | null): NavIt
 /** Where to land after sign-in: the most senior home the actor has. */
 export function homeFor(actor: Actor, school: ActorSchool | null): string {
   const nav = buildNavigation(actor, school);
-  const first = nav.find((n) => n.group === "Home") ?? nav.find((n) => n.href === "/app/fees") ?? nav[0];
+  const first = nav.find((n) => n.group === "Home") ?? nav.find((n) => n.href === "/app/fees") ?? nav.find((n) => n.href === "/app/helpdesk") ?? nav[0];
   return first?.href ?? "/app/no-access";
 }
