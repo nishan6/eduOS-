@@ -12,6 +12,10 @@ import { syncPermissionCatalog, syncRoleTemplates } from "@/modules/identity/rol
 import { ensureDefaultAccounts } from "@/modules/finance/ledger";
 import { loadActor } from "@/server/load-actor";
 import { assignFeeStructure, recordPayment } from "@/modules/fees/service";
+import { createExam, publishExam, saveMarks } from "@/modules/exams/service";
+import { createHomework } from "@/modules/homework/service";
+import { createEnquiry, moveStage } from "@/modules/admissions/service";
+import { sendAnnouncement } from "@/modules/announcements/service";
 import { addDays, schoolToday, toDbDate } from "@/lib/dates";
 
 const prisma = new PrismaClient();
@@ -245,6 +249,71 @@ async function main() {
       }
     }
   }
+
+  // --- Academics: a published unit test with marks, an open half-yearly, and homework ---
+  console.log("  exams and homework...");
+  for (const [idx, s] of schools.entries()) {
+    const principal = (await loadActor(users[idx === 0 ? "principal.sps@demo.eduos.test" : "principal.svl@demo.eduos.test"]!))!;
+    const grades = await prisma.grade.findMany({ where: { schoolId: s.school.id } });
+    const subjects = await prisma.subject.findMany({ where: { schoolId: s.school.id } });
+    const ut1 = await createExam(principal, {
+      schoolId: s.school.id, name: "Unit Test 1", startsOn: "2026-07-20",
+      gradeIds: grades.map((g) => g.id), subjects: subjects.map((x) => ({ subjectId: x.id, maxMarks: 25 })),
+    });
+    for (const paper of await prisma.examPaper.findMany({ where: { examId: ut1.id } })) {
+      const enrolled = await prisma.studentEnrollment.findMany({ where: { sectionId: paper.sectionId, status: "ACTIVE" }, select: { studentId: true } });
+      await saveMarks(principal, {
+        paperId: paper.id, submit: true,
+        entries: enrolled.map((e) => {
+          const absent = rand() < 0.02;
+          // Skewed toward the upper half, in half marks.
+          const marks = Math.round(Math.min(25, Math.max(4, 25 * (0.45 + 0.55 * Math.sqrt(rand())))) * 2) / 2;
+          return { studentId: e.studentId, isAbsent: absent, marks: absent ? null : marks };
+        }),
+      });
+    }
+    await publishExam(principal, ut1.id);
+    await createExam(principal, {
+      schoolId: s.school.id, name: "Half-Yearly", startsOn: addDays(today, 10),
+      gradeIds: grades.map((g) => g.id), subjects: subjects.map((x) => ({ subjectId: x.id, maxMarks: 80 })),
+    });
+  }
+  const teacher = (await loadActor(users["teacher.sps@demo.eduos.test"]!))!;
+  const [maths, science] = await Promise.all([
+    prisma.subject.findFirstOrThrow({ where: { schoolId: sps.school.id, code: "MATH" } }),
+    prisma.subject.findFirstOrThrow({ where: { schoolId: sps.school.id, code: "SCI" } }),
+  ]);
+  await createHomework(teacher, { sectionId: sec(sps, "Class 6", "A").id, subjectId: maths.id, title: "Fractions worksheet", instructions: "Complete exercise 4.2, questions 1 to 10, in your maths notebook.", dueOn: addDays(today, 2) });
+  await createHomework(teacher, { sectionId: sec(sps, "Class 6", "A").id, subjectId: science.id, title: "Plant observation", instructions: "Observe a plant at home for three days and note how it changes. Draw it once.", dueOn: addDays(today, 5) });
+  await createHomework(teacher, { sectionId: sec(sps, "Class 6", "B").id, subjectId: maths.id, title: "Fractions worksheet", instructions: "Complete exercise 4.2, questions 1 to 10.", dueOn: addDays(today, 2) });
+
+  // --- Admissions pipeline for next year's intake ---
+  console.log("  admissions and notices...");
+  const admissions = (await loadActor(users["admissions.sps@demo.eduos.test"]!))!;
+  const spsGrades = await prisma.grade.findMany({ where: { schoolId: sps.school.id }, orderBy: { order: "asc" } });
+  const enquiries: [string, string, number, string, ("CONTACTED" | "VISIT_SCHEDULED" | "APPLIED" | "OFFERED" | "LOST")[]][] = [
+    ["Ira", "Menon", 0, "Walk-in", []],
+    ["Dev", "Pillai", 1, "Website", ["CONTACTED"]],
+    ["Meera", "Shetty", 0, "Referral", ["CONTACTED", "VISIT_SCHEDULED"]],
+    ["Arnav", "Gupta", 2, "Sibling", ["CONTACTED", "VISIT_SCHEDULED", "APPLIED"]],
+    ["Sia", "Das", 1, "Phone", ["CONTACTED", "VISIT_SCHEDULED", "APPLIED", "OFFERED"]],
+    ["Kabir", "Iyer", 3, "Advertisement", ["CONTACTED", "LOST"]],
+  ];
+  for (const [i, [first, last, g, source, path]] of enquiries.entries()) {
+    const e = await createEnquiry(admissions, {
+      schoolId: sps.school.id, gradeId: spsGrades[g]!.id, childFirstName: first, childLastName: last,
+      guardianName: `${pick(FATHER)} ${last}`, phone: `98480${String(10000 + i)}`, source, followUpOn: addDays(today, i % 3),
+    });
+    for (const stage of path) {
+      await moveStage(admissions, { enquiryId: e.id, toStage: stage, lostReason: stage === "LOST" ? "Chose a school closer to home" : undefined });
+    }
+  }
+
+  const principalSps = (await loadActor(users["principal.sps@demo.eduos.test"]!))!;
+  await sendAnnouncement(principalSps, {
+    schoolId: sps.school.id, audience: "SCHOOL_PARENTS", title: "Parent-teacher meeting on Saturday",
+    body: "Dear parents, the term 1 parent-teacher meeting is this Saturday from 9:30 am to 12:30 pm. Please meet your child's class teacher.",
+  });
 
   console.log(`Done. ${allStudents.length} demo students across ${schools.length} schools.`);
   console.log(`Demo password for every account: ${DEMO_PASSWORD}`);

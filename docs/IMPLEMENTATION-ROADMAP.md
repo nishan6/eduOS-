@@ -25,8 +25,14 @@ Legend: ✅ done and tested · 🟡 partial · ⬜ not started
 - 🟡 Reconciliation: "mark verified" per payment; bank statement import pending
 - ⬜ Concessions/discounts with approval, refunds, credit notes, advance payments
 
-## Milestone D — Academic and operational expansion ⬜
-Homework, exams/results/report cards (CBSE and AP grading configs), admissions CRM, announcements and events, approvals engine, tickets.
+## Milestone D — Academic and operational expansion 🟡 (core shipped)
+Done:
+- Homework: teachers set and cancel homework for their sections; parents see it on the child page and get a notification.
+- Exams: principal creates an exam (papers per section × subject), teachers enter and submit marks with validation, principal reopens with a reason, publishes when all papers are in. Report cards for staff and parents (published only), printable.
+- Admissions: enquiry pipeline (New → Contacted → Visit → Applied → Offered → Admitted/Lost), follow-up dates, activity log, duplicate detection, one-step conversion into an enrolled student with guardian.
+- Notices: send to all parents, one class or one section (teachers: own sections only); in-app plus email adapter; parent notices page.
+
+Remaining: per-board grading configuration and co-scholastic areas, timetable, events calendar, generic approvals engine, helpdesk tickets, parent-teacher messaging.
 
 ## Milestone E — Specialist modules ⬜
 Transport, hostel, HR (staff attendance, leave), Tally export, payment gateway, SMS/WhatsApp adapters, biometric adapter.
@@ -40,5 +46,5 @@ ScientificStudy CSV import with preview/dedupe/exception report, security review
 ## Next steps (recommended order)
 1. Connect GitHub CI and a staging deployment with managed Postgres.
 2. CSV import for students and guardians (needed before any real pilot data).
-3. Concessions/discount approvals, then homework and exams.
+3. Concessions/discount approvals.
 4. MFA screens for owners and finance staff.

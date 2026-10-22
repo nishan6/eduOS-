@@ -81,6 +81,10 @@ model School {
   sequences          DocumentSequence[]
   hasHostel          Boolean                @default(false)
   sections           Section[]
+  homework           Homework[]
+  exams              Exam[]
+  enquiries          AdmissionEnquiry[]
+  announcements      Announcement[]
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -128,6 +132,10 @@ model User {
   guardian           Guardian?
   notifications      Notification[]
   auditLogs          AuditLog[]             @relation("AuditActor")
+  homeworkCreated    Homework[]             @relation("HomeworkAuthor")
+  marksEntered       ExamMark[]             @relation("MarkEnteredBy")
+  announcements      Announcement[]         @relation("AnnouncementAuthor")
+  enquiryActivities  AdmissionActivity[]    @relation("EnquiryActivityBy")
 
   @@map("user")
 }
@@ -378,6 +386,8 @@ model AcademicYear {
   sections      Section[]
   enrollments   StudentEnrollment[]
   feeStructures FeeStructure[]
+  exams         Exam[]
+  enquiries     AdmissionEnquiry[]
 
   @@unique([schoolId, name])
   @@index([schoolId, isCurrent])
@@ -389,9 +399,11 @@ model Grade {
   name     String // "Class 6"
   order    Int
 
-  school        School         @relation(fields: [schoolId], references: [id])
+  school        School             @relation(fields: [schoolId], references: [id])
   sections      Section[]
   feeStructures FeeStructure[]
+  enquiries     AdmissionEnquiry[]
+  announcements Announcement[]
 
   @@unique([schoolId, name])
 }
@@ -409,6 +421,9 @@ model Section {
   enrollments        StudentEnrollment[]
   teacherAssignments TeacherAssignment[]
   attendanceSessions AttendanceSession[]
+  homework           Homework[]
+  examPapers         ExamPaper[]
+  announcements      Announcement[]
 
   @@unique([gradeId, academicYearId, name])
   @@index([schoolId, academicYearId])
@@ -422,6 +437,8 @@ model Subject {
 
   school             School              @relation(fields: [schoolId], references: [id])
   teacherAssignments TeacherAssignment[]
+  homework           Homework[]
+  examPapers         ExamPaper[]
 
   @@unique([schoolId, code])
 }
@@ -483,6 +500,8 @@ model Student {
   feeAssignments StudentFeeAssignment[]
   invoices       Invoice[]
   payments       Payment[]
+  examMarks      ExamMark[]
+  enquiry        AdmissionEnquiry?
 
   @@unique([schoolId, admissionNo])
   @@index([schoolId, lastName, firstName])
@@ -915,4 +934,199 @@ model JournalLine {
   account LedgerAccount @relation(fields: [accountId], references: [id])
 
   @@index([accountId])
+}
+
+// ============================================================================
+// Academics: homework
+// ============================================================================
+
+enum HomeworkStatus {
+  PUBLISHED
+  CANCELLED
+}
+
+model Homework {
+  id           String         @id @default(cuid())
+  schoolId     String
+  sectionId    String
+  subjectId    String?
+  title        String
+  instructions String
+  assignedOn   DateTime       @db.Date
+  dueOn        DateTime       @db.Date
+  status       HomeworkStatus @default(PUBLISHED)
+  createdById  String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  school    School   @relation(fields: [schoolId], references: [id])
+  section   Section  @relation(fields: [sectionId], references: [id])
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+  createdBy User     @relation("HomeworkAuthor", fields: [createdById], references: [id])
+
+  @@index([sectionId, dueOn])
+  @@index([schoolId, dueOn])
+}
+
+// ============================================================================
+// Academics: exams, papers (one per section and subject) and marks
+// ============================================================================
+
+enum ExamStatus {
+  OPEN // papers accept marks
+  PUBLISHED // results visible to families; marks locked
+}
+
+enum PaperStatus {
+  OPEN
+  SUBMITTED
+}
+
+model Exam {
+  id             String     @id @default(cuid())
+  schoolId       String
+  academicYearId String
+  name           String // "Unit Test 1", "Half-Yearly"
+  startsOn       DateTime?  @db.Date
+  status         ExamStatus @default(OPEN)
+  publishedAt    DateTime?
+  createdById    String
+  createdAt      DateTime   @default(now())
+
+  school       School       @relation(fields: [schoolId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  papers       ExamPaper[]
+
+  @@unique([academicYearId, name])
+  @@index([schoolId, status])
+}
+
+model ExamPaper {
+  id            String      @id @default(cuid())
+  examId        String
+  schoolId      String
+  sectionId     String
+  subjectId     String
+  maxMarks      Int
+  status        PaperStatus @default(OPEN)
+  submittedAt   DateTime?
+  submittedById String?
+
+  exam    Exam       @relation(fields: [examId], references: [id])
+  section Section    @relation(fields: [sectionId], references: [id])
+  subject Subject    @relation(fields: [subjectId], references: [id])
+  marks   ExamMark[]
+
+  @@unique([examId, sectionId, subjectId])
+  @@index([sectionId])
+}
+
+model ExamMark {
+  id          String   @id @default(cuid())
+  paperId     String
+  studentId   String
+  marks       Decimal? @db.Decimal(5, 1) // null with isAbsent = true
+  isAbsent    Boolean  @default(false)
+  enteredById String
+  updatedAt   DateTime @updatedAt
+
+  paper     ExamPaper @relation(fields: [paperId], references: [id])
+  student   Student   @relation(fields: [studentId], references: [id])
+  enteredBy User      @relation("MarkEnteredBy", fields: [enteredById], references: [id])
+
+  @@unique([paperId, studentId])
+  @@index([studentId])
+}
+
+// ============================================================================
+// Admissions: enquiry pipeline
+// ============================================================================
+
+enum EnquiryStage {
+  NEW
+  CONTACTED
+  VISIT_SCHEDULED
+  APPLIED
+  OFFERED
+  ADMITTED
+  LOST
+}
+
+model AdmissionEnquiry {
+  id             String       @id @default(cuid())
+  schoolId       String
+  academicYearId String
+  gradeId        String
+  number         String // ENQ-SPS-000001
+  childFirstName String
+  childLastName  String
+  dateOfBirth    DateTime?    @db.Date
+  gender         Gender?
+  guardianName   String
+  phone          String
+  email          String?
+  source         String? // walk-in, website, referral, ...
+  stage          EnquiryStage @default(NEW)
+  followUpOn     DateTime?    @db.Date
+  lostReason     String?
+  studentId      String?      @unique // set when converted
+  createdById    String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  school       School              @relation(fields: [schoolId], references: [id])
+  academicYear AcademicYear        @relation(fields: [academicYearId], references: [id])
+  grade        Grade               @relation(fields: [gradeId], references: [id])
+  student      Student?            @relation(fields: [studentId], references: [id])
+  activities   AdmissionActivity[]
+
+  @@unique([schoolId, number])
+  @@index([schoolId, stage])
+  @@index([schoolId, phone])
+}
+
+model AdmissionActivity {
+  id        String        @id @default(cuid())
+  enquiryId String
+  text      String
+  fromStage EnquiryStage?
+  toStage   EnquiryStage?
+  byId      String
+  createdAt DateTime      @default(now())
+
+  enquiry AdmissionEnquiry @relation(fields: [enquiryId], references: [id])
+  by      User             @relation("EnquiryActivityBy", fields: [byId], references: [id])
+
+  @@index([enquiryId, createdAt])
+}
+
+// ============================================================================
+// Communication: announcements to families
+// ============================================================================
+
+enum AnnouncementAudience {
+  SCHOOL_PARENTS
+  GRADE_PARENTS
+  SECTION_PARENTS
+}
+
+model Announcement {
+  id             String               @id @default(cuid())
+  schoolId       String
+  title          String
+  body           String
+  audience       AnnouncementAudience
+  gradeId        String?
+  sectionId      String?
+  recipientCount Int // guardians reached in-app at publish time
+  emailCount     Int // emails handed to the email adapter
+  createdById    String
+  publishedAt    DateTime             @default(now())
+
+  school    School   @relation(fields: [schoolId], references: [id])
+  grade     Grade?   @relation(fields: [gradeId], references: [id])
+  section   Section? @relation(fields: [sectionId], references: [id])
+  createdBy User     @relation("AnnouncementAuthor", fields: [createdById], references: [id])
+
+  @@index([schoolId, publishedAt])
 }

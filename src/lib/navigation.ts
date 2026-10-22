@@ -2,7 +2,7 @@ import { canInOrganization, canSchoolWide, hasAnywhere, hasFamilyPermission, sec
 
 export type NavIcon =
   | "home" | "family" | "teacher" | "principal" | "owner" | "students" | "attendance" | "fees" | "finance"
-  | "school" | "users" | "audit" | "outbox" | "bell";
+  | "school" | "users" | "audit" | "outbox" | "bell" | "homework" | "exams" | "admissions" | "notices";
 
 export type NavItem = { href: string; label: string; icon: NavIcon; group: "Home" | "Operations" | "Settings" };
 
@@ -14,12 +14,19 @@ export function buildNavigation(actor: Actor, school: ActorSchool | null): NavIt
   if (sid && canSchoolWide(actor, "attendance.read", sid)) items.push({ href: "/app/principal", label: "School overview", icon: "principal", group: "Home" });
   if (sid && sectionFilter(actor, "attendance.mark", sid) !== "all" && sectionFilter(actor, "attendance.mark", sid).length > 0)
     items.push({ href: "/app/teacher", label: "My classes", icon: "teacher", group: "Home" });
-  if (hasFamilyPermission(actor, "family.read")) items.push({ href: "/app/family", label: "My children", icon: "family", group: "Home" });
+  if (hasFamilyPermission(actor, "family.read")) {
+    items.push({ href: "/app/family", label: "My children", icon: "family", group: "Home" });
+    items.push({ href: "/app/family/notices", label: "Notices", icon: "notices", group: "Home" });
+  }
 
   if (sid && hasAnywhere(actor, "students.read", sid)) items.push({ href: "/app/students", label: "Students", icon: "students", group: "Operations" });
   if (sid && canSchoolWide(actor, "attendance.read", sid)) items.push({ href: "/app/attendance", label: "Attendance", icon: "attendance", group: "Operations" });
   if (sid && canSchoolWide(actor, "attendance.mark", sid) && !items.some((i) => i.href === "/app/teacher"))
     items.push({ href: "/app/teacher", label: "Mark attendance", icon: "teacher", group: "Operations" });
+  if (sid && hasAnywhere(actor, "homework.read", sid)) items.push({ href: "/app/homework", label: "Homework", icon: "homework", group: "Operations" });
+  if (sid && hasAnywhere(actor, "exams.read", sid)) items.push({ href: "/app/exams", label: "Exams & marks", icon: "exams", group: "Operations" });
+  if (sid && canSchoolWide(actor, "admissions.read", sid)) items.push({ href: "/app/admissions", label: "Admissions", icon: "admissions", group: "Operations" });
+  if (sid && hasAnywhere(actor, "announcements.send", sid)) items.push({ href: "/app/notices", label: "Notices", icon: "notices", group: "Operations" });
   if (sid && canSchoolWide(actor, "fees.read", sid)) items.push({ href: "/app/fees", label: "Fees", icon: "fees", group: "Operations" });
   if (sid && canSchoolWide(actor, "finance.ledger.read", sid)) items.push({ href: "/app/finance", label: "Ledger", icon: "finance", group: "Operations" });
 

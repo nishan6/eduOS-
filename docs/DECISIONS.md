@@ -35,3 +35,18 @@ Attendance and due dates use `@db.Date` holding the Asia/Kolkata date, computed 
 
 ### D12. Development email outbox
 Without `EMAIL_PROVIDER`, emails are stored in `DevOutboxMessage` and shown at `/app/settings/outbox` (disabled in production). Nothing pretends to be delivered.
+
+### D13. One grading scale for now: CBSE nine-point
+Report cards use A1 (91–100) down to E (below 33), pass mark 33% per subject, percentages rounded up to a whole number before grading (90.5 → A1). Both pilot boards report on this shape. A per-school grading configuration (AP state-board term weights, CCE, co-scholastic areas) is deferred until a school needs a different scale; `src/modules/exams/calc.ts` is the single place to change. Absent counts as zero toward the total and fails that subject; a missing mark marks the report card incomplete rather than guessing.
+
+### D14. Exam papers per section and subject; marks locked on submit and on publish
+Creating an exam generates one paper for every current section of the chosen classes × each subject, so teachers see exactly the papers for their sections. A submitted paper is read-only until a principal reopens it with a reason (audited). Publishing requires every paper submitted and locks all marks; parents only ever see published exams. Marks are `Decimal(5,1)` (half marks allowed). Results follow the student's current section; a mid-year section change is not yet reflected in older exams.
+
+### D15. Admission happens only through conversion
+An enquiry cannot be moved to ADMITTED by a stage change. "Admit student" calls the normal `createStudent` service and marks the enquiry admitted inside the same transaction, so a failure leaves neither a stray student nor a half-admitted enquiry. Front office can log and progress enquiries but cannot admit (no `students.create`).
+
+### D16. Announcements are in-app first; email after commit
+Sending creates the announcement and in-app notifications in one transaction, then hands emails to the email adapter. With no provider configured they land in the development outbox and the sender is told none were delivered. Large sends will need a background queue before production use (marked TODO in the service).
+
+### D17. Role templates are re-synced by a script, not a migration
+New permissions ship in `catalog.ts`. After deploying, run `npm run db:sync-roles` to update system roles in every organization. Custom roles are untouched.

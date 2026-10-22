@@ -45,7 +45,15 @@ async function loadSection(sectionId: string) {
   return section;
 }
 
-export async function createStudent(actor: Actor, raw: CreateStudentInput) {
+/**
+ * Admits a student. `withinTx` runs inside the same transaction after the student exists, so
+ * callers such as admissions conversion can link records atomically.
+ */
+export async function createStudent(
+  actor: Actor,
+  raw: CreateStudentInput,
+  withinTx?: (tx: Prisma.TransactionClient, studentId: string) => Promise<void>,
+) {
   const input = parseInput(createStudentInput, raw);
   const scope = { schoolId: input.schoolId };
   assertCan(actor, "students.create", scope);
@@ -109,6 +117,7 @@ export async function createStudent(actor: Actor, raw: CreateStudentInput) {
       },
       tx,
     );
+    if (withinTx) await withinTx(tx, student.id);
     return { student, guardianId };
   });
 }

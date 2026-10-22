@@ -35,9 +35,24 @@ export async function createTestDatabase(): Promise<{ url: string; drop: () => P
     async drop() {
       if (process.env.KEEP_TEST_DB) return;
       const a = new PrismaClient({ datasourceUrl: adminUrl(baseUrl) });
-      // Only ever drops the database this run created.
-      await a.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
-      await a.$disconnect();
+      // Only ever drops the database this run created. FORCE can be refused while a background
+      // worker owned by another role (e.g. autovacuum) is attached, so retry briefly.
+      try {
+        for (let attempt = 1; ; attempt++) {
+          try {
+            await a.$executeRawUnsafe(`DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
+            return;
+          } catch (err) {
+            if (attempt >= 10) {
+              console.warn(`[tests] could not drop ${name}; drop it manually. ${err instanceof Error ? err.message : err}`);
+              return;
+            }
+            await new Promise((r) => setTimeout(r, 500 * attempt));
+          }
+        }
+      } finally {
+        await a.$disconnect();
+      }
     },
   };
 }
