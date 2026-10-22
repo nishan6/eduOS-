@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell, BookOpenCheck, Building2, CalendarCheck, ClipboardList, GraduationCap, Home, Inbox, Landmark, LogOut,
+  Bell, BookOpenCheck, Building2, CalendarCheck, CalendarClock, CalendarDays, LifeBuoy, MessageCircleQuestion, ClipboardList, GraduationCap, Home, Inbox, Landmark, LogOut,
   Megaphone, Menu, NotebookPen, Receipt, School, Search, ShieldCheck, SquarePen, UserPlus, Users, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
@@ -16,6 +16,7 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   home: Home, family: UsersRound, teacher: BookOpenCheck, principal: School, owner: Building2, students: GraduationCap,
   attendance: CalendarCheck, fees: Receipt, finance: Landmark, school: ClipboardList, users: Users, audit: ShieldCheck,
   outbox: Inbox, bell: Bell, homework: NotebookPen, exams: SquarePen, admissions: UserPlus, notices: Megaphone,
+  timetable: CalendarClock, calendar: CalendarDays, helpdesk: LifeBuoy, support: MessageCircleQuestion,
 };
 
 type Props = {
@@ -106,7 +107,7 @@ export function AppShell({ nav, schools, activeSchoolId, user, unread, academicY
           {academicYear && <p className="mt-1 px-1 text-xs text-muted-foreground">Academic year {academicYear}</p>}
         </div>
       )}
-      <div className="flex-1 overflow-y-auto"><NavLinks nav={nav} onNavigate={() => setOpen(false)} /></div>
+      <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1"><NavLinks nav={nav} onNavigate={() => setOpen(false)} /></div>
       <div className="flex items-center gap-2 border-t border-border px-1 pt-4">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold">{initials(user.name)}</div>
         <div className="min-w-0 flex-1">

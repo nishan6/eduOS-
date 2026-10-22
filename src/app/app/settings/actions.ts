@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { runAction } from "@/server/action";
-import { addClassWithSections, assignTeacher, createSchool } from "@/modules/org/service";
+import { addClassWithSections, assignTeacher, createSchool, setGradingRules } from "@/modules/org/service";
 import { inviteStaff, setMembershipStatus } from "@/modules/identity/service";
 
 type In<F extends (...a: never[]) => unknown> = Parameters<F>[1];
@@ -33,5 +33,11 @@ export async function inviteStaffAction(input: In<typeof inviteStaff>) {
 export async function setMembershipAction(schoolId: string, userId: string, status: "ACTIVE" | "SUSPENDED") {
   const r = await runAction((actor) => setMembershipStatus(actor, schoolId, userId, status));
   if (r.ok) revalidatePath("/app/settings/users");
+  return r;
+}
+
+export async function setGradingAction(input: In<typeof setGradingRules>) {
+  const r = await runAction((actor) => setGradingRules(actor, input), "Grading saved. New exams will use it.");
+  if (r.ok) revalidatePath("/app/settings/school");
   return r;
 }

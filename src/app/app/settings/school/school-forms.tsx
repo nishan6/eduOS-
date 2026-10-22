@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/form";
 import { Alert } from "@/components/ui/misc";
 import type { ActionResult } from "@/lib/errors";
-import { addClassAction, assignTeacherAction, createSchoolAction } from "../actions";
+import { addClassAction, assignTeacherAction, createSchoolAction, setGradingAction } from "../actions";
 
 function useSubmit() {
   const router = useRouter();
@@ -82,6 +82,26 @@ export function CreateSchoolForm({ organizationId }: { organizationId: string })
         <Field label="Ends" name="yend"><Input id="yend" name="yend" type="date" defaultValue="2027-04-30" required /></Field>
       </div>
       <Button variant="secondary" disabled={pending}>Create school</Button>
+    </form>
+  );
+}
+
+export function GradingForm({ schoolId, scale, passPercent, options }: { schoolId: string; scale: string; passPercent: number; options: { value: string; label: string }[] }) {
+  const { pending, msg, run } = useSubmit();
+  return (
+    <form className="flex flex-col gap-3" onSubmit={(e) => {
+      e.preventDefault();
+      const f = new FormData(e.currentTarget);
+      run(() => setGradingAction({ schoolId, scale: String(f.get("scale")) as "CBSE_9_POINT", passPercent: Number(f.get("passPercent")) }));
+    }}>
+      {msg && <Alert tone={msg.ok ? "success" : "danger"}>{msg.text}</Alert>}
+      <Field label="Grading scale" name="scale">
+        <Select id="scale" name="scale" defaultValue={scale}>{options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</Select>
+      </Field>
+      <Field label="Pass mark (%)" name="passPercent" hint="Per subject. Applies to exams created after saving.">
+        <Input id="passPercent" name="passPercent" type="number" min={20} max={60} defaultValue={passPercent} />
+      </Field>
+      <Button variant="secondary" disabled={pending}>Save grading</Button>
     </form>
   );
 }
