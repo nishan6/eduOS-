@@ -24,6 +24,15 @@ export const PERMISSIONS = {
   "attendance.read": { module: "attendance", description: "View attendance" },
   "attendance.mark": { module: "attendance", description: "Mark and submit attendance" },
   "attendance.correct": { module: "attendance", description: "Approve attendance corrections" },
+  "homework.read": { module: "academics", description: "View homework" },
+  "homework.manage": { module: "academics", description: "Set and cancel homework" },
+  "exams.read": { module: "academics", description: "View exams, marks and report cards" },
+  "exams.manage": { module: "academics", description: "Create exams, reopen papers and publish results" },
+  "marks.enter": { module: "academics", description: "Enter and submit marks" },
+  // Admissions & communication
+  "admissions.read": { module: "admissions", description: "View admission enquiries" },
+  "admissions.manage": { module: "admissions", description: "Create enquiries, move stages, convert to students" },
+  "announcements.send": { module: "communication", description: "Send announcements to families" },
   // Fees & finance
   "fees.read": { module: "fees", description: "View fee structures, invoices and payments" },
   "fees.configure": { module: "fees", description: "Create fee structures and categories" },
@@ -77,6 +86,7 @@ export const ROLE_TEMPLATES: Template[] = [
       "attendance.correct", "fees.configure", "fees.assign", "fees.discount.approve",
       "finance.ledger.read", "finance.ledger.create", "finance.ledger.update", "finance.reconcile",
       "reports.export", "ai.query", "ai.actions.approve",
+      "homework.read", "exams.read", "admissions.read", "announcements.send",
     ]),
   },
   {
@@ -85,12 +95,13 @@ export const ROLE_TEMPLATES: Template[] = [
     permissions: allWith("ORGANIZATION", [
       ...SCHOOL_OPERATIONS, "settings.manage", "users.manage", "audit.read",
       "students.create", "students.update", "guardians.manage", "enrollment.manage", "reports.export", "ai.query",
+      "homework.read", "exams.read", "admissions.read", "admissions.manage", "announcements.send",
     ]),
   },
   {
     key: "school_management", name: "School Management", level: "school",
     description: "School owner or trustee view of one school.",
-    permissions: allWith("SCHOOL", [...SCHOOL_OPERATIONS, "finance.ledger.read", "reports.export", "audit.read", "ai.query"]),
+    permissions: allWith("SCHOOL", [...SCHOOL_OPERATIONS, "finance.ledger.read", "reports.export", "audit.read", "ai.query", "homework.read", "exams.read", "admissions.read"]),
   },
   {
     key: "principal", name: "Principal", level: "school",
@@ -99,12 +110,16 @@ export const ROLE_TEMPLATES: Template[] = [
       ...SCHOOL_OPERATIONS, "settings.manage", "students.create", "students.update", "students.archive",
       "guardians.manage", "enrollment.manage", "attendance.mark", "attendance.correct", "fees.discount.approve",
       "reports.export", "audit.read", "ai.query", "ai.actions.approve",
+      "homework.read", "homework.manage", "exams.read", "exams.manage", "marks.enter", "admissions.read", "admissions.manage", "announcements.send",
     ]),
   },
   {
     key: "vice_principal", name: "Vice Principal / Academic Coordinator", level: "school",
     description: "Academic oversight.",
-    permissions: allWith("SCHOOL", [...SCHOOL_OPERATIONS, "students.update", "attendance.mark", "attendance.correct", "ai.query"]),
+    permissions: allWith("SCHOOL", [
+      ...SCHOOL_OPERATIONS, "students.update", "attendance.mark", "attendance.correct", "ai.query",
+      "homework.read", "homework.manage", "exams.read", "exams.manage", "marks.enter", "announcements.send",
+    ]),
   },
   {
     key: "teacher", name: "Teacher", level: "school",
@@ -112,12 +127,14 @@ export const ROLE_TEMPLATES: Template[] = [
     permissions: {
       "org.read": "SCHOOL", "academics.read": "SCHOOL",
       "students.read": "ASSIGNED", "attendance.read": "ASSIGNED", "attendance.mark": "ASSIGNED", "ai.query": "ASSIGNED",
+      "homework.read": "ASSIGNED", "homework.manage": "ASSIGNED", "exams.read": "ASSIGNED", "marks.enter": "ASSIGNED",
+      "announcements.send": "ASSIGNED",
     },
   },
   {
     key: "admissions_officer", name: "Admissions Officer", level: "school",
     description: "Admissions pipeline and new student records.",
-    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "students.create", "guardians.manage", "enrollment.manage"]),
+    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "students.create", "guardians.manage", "enrollment.manage", "admissions.read", "admissions.manage"]),
   },
   {
     key: "accounts_admin", name: "Accounts Administrator", level: "school",
@@ -135,8 +152,8 @@ export const ROLE_TEMPLATES: Template[] = [
   },
   {
     key: "front_office", name: "Front Office / Reception", level: "school",
-    description: "Look up students and guardians.",
-    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read"]),
+    description: "Look up students and guardians, log walk-in enquiries.",
+    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "admissions.read", "admissions.manage"]),
   },
   { key: "hr_admin", name: "HR Administrator", level: "school", description: "Staff records (HR module pending).", permissions: allWith("SCHOOL", ["org.read", "users.read"]) },
   { key: "transport_manager", name: "Transport Manager", level: "school", description: "Transport (module pending).", permissions: allWith("SCHOOL", ["org.read", "students.read"]) },
@@ -146,7 +163,7 @@ export const ROLE_TEMPLATES: Template[] = [
   {
     key: "parent", name: "Parent / Guardian", level: "organization",
     description: "Sees only children explicitly linked to their guardian record.",
-    permissions: allWith("OWN_FAMILY", ["family.read", "students.read", "attendance.read", "fees.read"]),
+    permissions: allWith("OWN_FAMILY", ["family.read", "students.read", "attendance.read", "fees.read", "homework.read", "exams.read"]),
   },
   {
     key: "student", name: "Student", level: "school",

@@ -6,6 +6,7 @@ import { can, canSchoolWide } from "@/lib/permissions/evaluate";
 import { getStudentProfile, listCurrentSections } from "@/modules/students/service";
 import { studentAttendanceHistory } from "@/modules/attendance/service";
 import { studentFeeAccount } from "@/modules/fees/service";
+import { studentResults } from "@/modules/exams/service";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { formatPaise } from "@/lib/money";
 import { formatRate } from "@/modules/attendance/calc";
@@ -28,10 +29,11 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   const s = profile.student;
   const schoolId = s.schoolId;
   const current = s.enrollments.find((e) => e.academicYear.isCurrent);
-  const [attendance, fees, sections] = await Promise.all([
+  const [attendance, fees, sections, results] = await Promise.all([
     orNull(studentAttendanceHistory(actor, id, 30)),
     can(actor, "fees.read", { schoolId }) ? orNull(studentFeeAccount(actor, id)) : null,
     can(actor, "enrollment.manage", { schoolId }) ? listCurrentSections(schoolId) : [],
+    orNull(studentResults(actor, id)),
   ]);
   const canManageGuardians = canSchoolWide(actor, "guardians.manage", schoolId);
 
@@ -94,6 +96,24 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {results && results.length > 0 && (
+          <Card>
+            <CardHeader><div><CardTitle>Exam results</CardTitle><CardDescription>Current academic year.</CardDescription></div></CardHeader>
+            <CardContent className="px-0 pb-2">
+              <ul className="divide-y divide-border">
+                {results.map((r) => (
+                  <li key={r.examId}>
+                    <Link href={`/app/students/${s.id}/results/${r.examId}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-muted/60">
+                      <span className="font-medium">{r.examName} {r.status !== "PUBLISHED" && <Badge className="ml-1">Not published</Badge>}</span>
+                      <span className="flex items-center gap-2 text-sm tabular-nums">{r.incomplete ? "Incomplete" : `${r.percent}%`} <Badge tone="primary">{r.grade}</Badge></span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         )}

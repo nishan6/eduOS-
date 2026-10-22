@@ -5,8 +5,10 @@ import { AppError } from "@/lib/errors";
 import { getStudentProfile } from "@/modules/students/service";
 import { studentAttendanceHistory } from "@/modules/attendance/service";
 import { studentFeeAccount } from "@/modules/fees/service";
+import { studentHomework } from "@/modules/homework/service";
+import { studentResults } from "@/modules/exams/service";
 import { formatPaise } from "@/lib/money";
-import { formatDate } from "@/lib/dates";
+import { formatDate, schoolToday } from "@/lib/dates";
 import { formatRate } from "@/modules/attendance/calc";
 import { Badge, StatusBadge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,7 +24,11 @@ export default async function ChildPage({ params }: { params: Promise<{ studentI
   const actor = await requireActor();
   const profile = await orNull(getStudentProfile(actor, studentId));
   if (!profile || profile.access !== "family") notFound();
-  const [attendance, fees] = await Promise.all([orNull(studentAttendanceHistory(actor, studentId, 60)), orNull(studentFeeAccount(actor, studentId))]);
+  const [attendance, fees, homework, results] = await Promise.all([
+    orNull(studentAttendanceHistory(actor, studentId, 60)), orNull(studentFeeAccount(actor, studentId)),
+    orNull(studentHomework(actor, studentId)), orNull(studentResults(actor, studentId)),
+  ]);
+  const today = schoolToday();
   const s = profile.student;
   const current = s.enrollments.find((e) => e.academicYear.isCurrent);
 
@@ -35,6 +41,43 @@ export default async function ChildPage({ params }: { params: Promise<{ studentI
         <Stat label="Outstanding fees" value={fees ? formatPaise(fees.totals.outstandingPaise) : "—"} tone={fees && fees.totals.overduePaise > 0 ? "danger" : undefined}
           hint={fees ? (fees.totals.overduePaise > 0 ? `${formatPaise(fees.totals.overduePaise)} overdue` : "Nothing overdue") : "Not shared with you"} />
         <Stat label="Next due" value={fees?.nextDue ? formatPaise(fees.nextDue.amountPaise) : "—"} hint={fees?.nextDue ? formatDate(fees.nextDue.dueDate) : "No upcoming dues"} />
+      </div>
+      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader><div><CardTitle>Homework</CardTitle><CardDescription>Set in the last week and upcoming.</CardDescription></div></CardHeader>
+          <CardContent className="px-0 pb-2">
+            {!homework || homework.length === 0 ? <p className="px-5 text-sm text-muted-foreground">No homework right now.</p> : (
+              <ul className="divide-y divide-border">
+                {homework.map((h) => (
+                  <li key={h.id} className="px-5 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-medium">{h.title}{h.subject ? <span className="font-normal text-muted-foreground"> · {h.subject}</span> : null}</p>
+                      <Badge tone={h.dueOn < today ? "neutral" : h.dueOn === today ? "warning" : "success"}>Due {formatDate(h.dueOn)}</Badge>
+                    </div>
+                    <p className="mt-0.5 whitespace-pre-line text-sm text-muted-foreground">{h.instructions}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><div><CardTitle>Exam results</CardTitle><CardDescription>Published results for this academic year.</CardDescription></div></CardHeader>
+          <CardContent className="px-0 pb-2">
+            {!results || results.length === 0 ? <p className="px-5 text-sm text-muted-foreground">No results published yet.</p> : (
+              <ul className="divide-y divide-border">
+                {results.map((r) => (
+                  <li key={r.examId}>
+                    <Link href={`/app/family/children/${studentId}/results/${r.examId}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-surface-muted/60">
+                      <span className="font-medium">{r.examName}</span>
+                      <span className="flex items-center gap-2 text-sm tabular-nums">{r.percent}% <Badge tone="primary">{r.grade}</Badge></span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>

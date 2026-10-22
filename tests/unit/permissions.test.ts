@@ -62,4 +62,26 @@ describe("permission evaluation", () => {
   it("every template only references catalogued permissions", () => {
     for (const t of ROLE_TEMPLATES) for (const k of Object.keys(t.permissions)) expect(PERMISSIONS).toHaveProperty(k);
   });
+
+  it("academic permissions: teachers enter marks and homework only for assigned sections and cannot create exams", () => {
+    const t = actorWith("teacher", A.id, { schools: [A], assignedSections: { [A.id]: ["s1"] } });
+    expect(can(t, "marks.enter", { schoolId: A.id, sectionId: "s1" })).toBe(true);
+    expect(can(t, "marks.enter", { schoolId: A.id, sectionId: "s2" })).toBe(false);
+    expect(can(t, "homework.manage", { schoolId: A.id, sectionId: "s2" })).toBe(false);
+    expect(canSchoolWide(t, "announcements.send", A.id)).toBe(false);
+    expect(can(t, "exams.manage", { schoolId: A.id, sectionId: "s1" })).toBe(false);
+    const p = actorWith("principal", A.id);
+    expect(canSchoolWide(p, "exams.manage", A.id)).toBe(true);
+    expect(canSchoolWide(p, "exams.manage", B.id)).toBe(false);
+    const managers = ROLE_TEMPLATES.filter((r) => r.permissions["exams.manage"]).map((r) => r.key).sort();
+    expect(managers).toEqual(["principal", "vice_principal"]);
+  });
+
+  it("admissions: cashier and teacher cannot see enquiries; front office can log them but not admit", () => {
+    expect(canSchoolWide(actorWith("accountant", A.id), "admissions.read", A.id)).toBe(false);
+    expect(can(actorWith("teacher", A.id, { assignedSections: { [A.id]: ["s1"] } }), "admissions.read", { schoolId: A.id, sectionId: "s1" })).toBe(false);
+    const fo = actorWith("front_office", A.id);
+    expect(canSchoolWide(fo, "admissions.manage", A.id)).toBe(true);
+    expect(canSchoolWide(fo, "students.create", A.id)).toBe(false);
+  });
 });

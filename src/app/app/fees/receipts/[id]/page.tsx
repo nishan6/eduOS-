@@ -5,7 +5,7 @@ import { getReceipt } from "@/modules/fees/service";
 import { formatPaise } from "@/lib/money";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { Card } from "@/components/ui/card";
-import { PrintButton } from "./print-button";
+import { PrintButton } from "@/components/print-button";
 
 export const metadata = { title: "Receipt" };
 

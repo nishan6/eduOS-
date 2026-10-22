@@ -30,6 +30,8 @@ npm run dev
 
 The seed refuses to run if the demo organization already exists and when `EDUOS_ENV=production`. It never deletes data. To start over in development, drop and recreate your **development** database yourself, then rerun the two commands above.
 
+Upgrading an existing development database from an earlier release: `npx prisma migrate deploy && npm run db:sync-roles`. The homework, exam, admissions and notice demo data only comes with a fresh seed.
+
 ## Demo accounts (fictional development data)
 
 Password for every account: `EduOS-demo-2026!`
@@ -57,6 +59,11 @@ Password for every account: `EduOS-demo-2026!`
 4. **New student and parent login.** As `admissions.sps`, Students → New student, with a guardian. On the student page, "Invite to app" shows an activation link (development only). Open it in a private window, set a password, sign in: the guardian sees only that child.
 5. **Access control.** As a teacher, open `/app/finance` or another school's student URL: Not found.
 6. **New school.** As `owner`, School setup → Add a school.
+7. **Homework.** As `teacher.sps`, Homework → set work for Class 6 - A. As `parent`, open Aanya's details: it is listed.
+8. **Marks.** As `teacher.sps`, Exams & marks → Half-Yearly → Enter marks for Class 6 - A → fill in, Submit. As `principal.sps`, the exam shows progress; Publish unlocks once every paper is submitted.
+9. **Report card.** As `parent`, Aanya's details → Unit Test 1 (seeded and published).
+10. **Admissions.** As `admissions.sps`, Admissions → New enquiry → move to Applied → Admit student. The new student page opens.
+11. **Notices.** As `principal.sps`, Notices → send to all parents. As `parent2`, Notices shows it.
 
 ## Tests
 
@@ -74,7 +81,7 @@ EduOS is a standard Next.js server application plus PostgreSQL.
 
 1. Provision managed PostgreSQL (with automated backups and point-in-time recovery) and set `DATABASE_URL`.
 2. Set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `EDUOS_ENV=production`.
-3. Deploy with `npm ci && npx prisma migrate deploy && npm run build`, start with `npm start`. Vercel works: set the build command to `prisma migrate deploy && next build`.
+3. Deploy with `npm ci && npx prisma migrate deploy && npm run db:sync-roles && npm run build`, start with `npm start`. Vercel works: set the build command to `prisma migrate deploy && next build`.
 4. Never run `npm run db:seed` or any reset against staging or production.
 
 Use separate databases and secrets for development, staging and production.

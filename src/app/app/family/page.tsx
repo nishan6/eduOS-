@@ -38,7 +38,7 @@ function ChildCard({ child }: { child: FamilyChild }) {
             <Badge>{BOARD[child.school.board]}</Badge>
           </div>
         </div>
-        <Link href={`/app/family/children/${child.id}`} className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline">
+        <Link href={`/app/family/children/${child.id}`} aria-label={`Details for ${child.name}`} className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline">
           Details <ChevronRight className="size-4" aria-hidden />
         </Link>
       </CardHeader>

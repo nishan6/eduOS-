@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, BookOpenCheck, Building2, CalendarCheck, ClipboardList, GraduationCap, Home, Inbox, Landmark, LogOut,
-  Menu, Receipt, School, Search, ShieldCheck, Users, UsersRound, X, type LucideIcon,
+  Megaphone, Menu, NotebookPen, Receipt, School, Search, ShieldCheck, SquarePen, UserPlus, Users, UsersRound, X, type LucideIcon,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 import type { NavIcon, NavItem } from "@/lib/navigation";
@@ -15,7 +15,7 @@ import { signOutAction } from "@/app/login/actions";
 const ICONS: Record<NavIcon, LucideIcon> = {
   home: Home, family: UsersRound, teacher: BookOpenCheck, principal: School, owner: Building2, students: GraduationCap,
   attendance: CalendarCheck, fees: Receipt, finance: Landmark, school: ClipboardList, users: Users, audit: ShieldCheck,
-  outbox: Inbox, bell: Bell,
+  outbox: Inbox, bell: Bell, homework: NotebookPen, exams: SquarePen, admissions: UserPlus, notices: Megaphone,
 };
 
 type Props = {
