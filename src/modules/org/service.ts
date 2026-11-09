@@ -35,6 +35,8 @@ export async function createSchool(actor: Actor, raw: z.input<typeof schoolInput
       const school = await tx.school.create({
         data: {
           organizationId: input.organizationId, name: input.name, code: input.code, board: input.board, city: input.city, state: input.state,
+          // State-board schools start on the state scale; either can be changed in School setup.
+          ...(input.board === "AP_STATE" ? { gradingScale: "AP_SSC_9_POINT" as const, passPercent: 35 } : {}),
           academicYears: {
             create: {
               name: input.academicYear.name, startDate: toDbDate(input.academicYear.startDate),
@@ -178,5 +180,23 @@ export async function listAudit(actor: Actor, schoolId: string, take = 100) {
     include: { actor: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
     take,
+  });
+}
+
+export const gradingInput = z.object({
+  schoolId: z.string().min(1),
+  scale: z.enum(["CBSE_9_POINT", "AP_SSC_9_POINT"]),
+  passPercent: z.coerce.number().int().min(20, "Pass mark must be at least 20%").max(60, "Pass mark must be at most 60%"),
+});
+
+/** Sets the grading scale used by exams created from now on. Existing exams keep theirs. */
+export async function setGradingRules(actor: Actor, raw: z.input<typeof gradingInput>) {
+  const input = parseInput(gradingInput, raw);
+  assertCan(actor, "settings.manage", { schoolId: input.schoolId });
+  const school = await prisma.school.update({ where: { id: input.schoolId }, data: { gradingScale: input.scale, passPercent: input.passPercent } });
+  await audit({
+    actorUserId: actor.userId, organizationId: school.organizationId, schoolId: school.id,
+    action: "school.grading.update", entityType: "School", entityId: school.id,
+    summary: `Grading scale set to ${input.scale}, pass mark ${input.passPercent}%`,
   });
 }

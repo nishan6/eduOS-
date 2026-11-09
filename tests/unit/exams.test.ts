@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gradeFor, percent, summarise, validateMark } from "@/modules/exams/calc";
+import { describeScale, gradeFor, percent, summarise, validateMark } from "@/modules/exams/calc";
 
 describe("grading", () => {
   it("maps percentages to the nine-point scale at the boundaries", () => {
@@ -49,5 +49,22 @@ describe("grading", () => {
 
     const failing = summarise([{ subject: "Maths", maxMarks: 50, marks: 10, isAbsent: false }]);
     expect(failing).toMatchObject({ passed: false, grade: "E" });
+  });
+});
+
+describe("AP state-board scale", () => {
+  it("uses its own bands and pass mark", () => {
+    expect(gradeFor(92, "AP_SSC_9_POINT").grade).toBe("A1");
+    expect(gradeFor(91, "AP_SSC_9_POINT").grade).toBe("A2");
+    expect(gradeFor(35, "AP_SSC_9_POINT").grade).toBe("D2");
+    expect(gradeFor(34, "AP_SSC_9_POINT").grade).toBe("E");
+    const r = summarise([{ subject: "Telugu", maxMarks: 100, marks: 34, isAbsent: false }], { scale: "AP_SSC_9_POINT", passPercent: 35 });
+    expect(r).toMatchObject({ passed: false, grade: "E" });
+    expect(summarise([{ subject: "Telugu", maxMarks: 100, marks: 34, isAbsent: false }]).passed).toBe(true);
+  });
+
+  it("describes bands for report card footers", () => {
+    expect(describeScale("CBSE_9_POINT")).toBe("A1 91–100, A2 81–90, B1 71–80, B2 61–70, C1 51–60, C2 41–50, D 33–40, E below 33");
+    expect(describeScale("AP_SSC_9_POINT")).toContain("D2 35–42, E below 35");
   });
 });

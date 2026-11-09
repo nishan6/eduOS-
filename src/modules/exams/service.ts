@@ -44,7 +44,10 @@ export async function createExam(actor: Actor, raw: z.input<typeof createExamInp
 
   return prisma.$transaction(async (tx) => {
     const exam = await tx.exam.create({
-      data: { schoolId: input.schoolId, academicYearId: year.id, name: input.name, startsOn: input.startsOn ? toDbDate(input.startsOn) : null, createdById: actor.userId },
+      data: {
+        schoolId: input.schoolId, academicYearId: year.id, name: input.name, startsOn: input.startsOn ? toDbDate(input.startsOn) : null,
+        gradingScale: year.school.gradingScale, passPercent: year.school.passPercent, createdById: actor.userId,
+      },
     });
     await tx.examPaper.createMany({
       data: sections.flatMap((sec) => input.subjects.map((s) => ({ examId: exam.id, schoolId: input.schoolId, sectionId: sec.id, subjectId: s.subjectId, maxMarks: s.maxMarks }))),
@@ -296,7 +299,9 @@ async function resultsFor(studentId: string, sectionId: string, examFilter: Pris
     byExam.set(p.examId, entry);
   }
   return [...byExam.values()].map(({ exam, rows }) => ({
-    examId: exam.id, examName: exam.name, status: exam.status, publishedAt: exam.publishedAt, ...summarise(rows),
+    examId: exam.id, examName: exam.name, status: exam.status, publishedAt: exam.publishedAt,
+    gradingScale: exam.gradingScale, passPercent: exam.passPercent,
+    ...summarise(rows, { scale: exam.gradingScale, passPercent: exam.passPercent }),
   }));
 }
 

@@ -2,7 +2,7 @@
 
 An AI-native operating system for K–12 school groups: one platform for student records, attendance, fees, finance, admissions, communication and operations, with role-specific experiences for parents, teachers, principals and owners.
 
-**Status:** Milestones A (foundation), B (student → guardian → attendance → parent slice) and C (fees → invoice → payment → receipt → balance) are implemented and tested. Milestone D core is in: homework, exams with marks entry and report cards, the admissions pipeline, and notices to parents. See [docs/IMPLEMENTATION-ROADMAP.md](docs/IMPLEMENTATION-ROADMAP.md).
+**Status:** Milestones A (foundation), B (student → guardian → attendance → parent slice) and C (fees → invoice → payment → receipt → balance) are implemented and tested. Milestone D is in: homework, exams with marks entry and report cards (CBSE or AP state-board grading), the admissions pipeline, notices, timetable, calendar and helpdesk. See [docs/IMPLEMENTATION-ROADMAP.md](docs/IMPLEMENTATION-ROADMAP.md).
 
 ## Quick start
 

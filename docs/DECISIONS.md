@@ -50,3 +50,12 @@ Sending creates the announcement and in-app notifications in one transaction, th
 
 ### D17. Role templates are re-synced by a script, not a migration
 New permissions ship in `catalog.ts`. After deploying, run `npm run db:sync-roles` to update system roles in every organization. Custom roles are untouched.
+
+### D18. Grading scale per school, copied onto each exam
+Schools choose a scale in School setup: CBSE nine-point (pass 33%) or the AP state-board nine-point scale (A1 92–100, A2 83–91, B1 75–82, B2 67–74, C1 59–66, C2 51–58, D1 43–50, D2 35–42, E below 35; pass 35%). State-board schools default to the AP scale. **The AP bands are the commonly published SSC scale and must be confirmed with the pilot school before report cards go out.** Each exam copies the scale and pass mark when it is created, so changing the setting never rewrites results already published. Adding a scale is one entry in `SCALES` plus an enum value.
+
+### D19. Timetable is a grid of section × weekday × period
+Periods (`PeriodSlot`) are shared by every class in a school; breaks are periods flagged `isBreak`. Each cell holds a subject and optionally a teacher. A unique index on (teacher, weekday, period) makes double-booking impossible even under concurrent edits; the service checks first so the error names the clashing class. Monday–Saturday only. Rotating or multi-week timetables are out of scope for now.
+
+### D20. Helpdesk: raisers see their thread, staff see the queue
+Parents raise requests about a specific linked child (the school is taken from the child); staff raise them in their own school. Staff with `tickets.manage` work the school queue, can add internal notes, assign and change status. The raiser's view never loads internal notes. A raiser replying to a resolved ticket reopens it; closed tickets accept no replies.

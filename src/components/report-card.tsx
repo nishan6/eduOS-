@@ -1,11 +1,12 @@
 import type { reportCard } from "@/modules/exams/service";
+import { describeScale } from "@/modules/exams/calc";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TD, TH, THead, TR } from "@/components/ui/table";
 
 type Data = Awaited<ReturnType<typeof reportCard>>;
 
-/** Printable report card for one exam. Grades follow the CBSE nine-point scale (see DECISIONS D13). */
+/** Printable report card for one exam, graded on the scale fixed when the exam was created. */
 export function ReportCard({ data }: { data: Data }) {
   return (
     <Card className="print:border-0 print:shadow-none">
@@ -38,7 +39,7 @@ export function ReportCard({ data }: { data: Data }) {
             </TR>
           </tbody>
         </Table>
-        <p className="px-5 pt-3 text-xs text-muted-foreground">Grades: A1 91–100, A2 81–90, B1 71–80, B2 61–70, C1 51–60, C2 41–50, D 33–40, E below 33. AB = absent.</p>
+        <p className="px-5 pt-3 text-xs text-muted-foreground">Grades: {describeScale(data.gradingScale)}. Pass mark {data.passPercent}% per subject. AB = absent.</p>
       </CardContent>
     </Card>
   );

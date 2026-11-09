@@ -8,7 +8,8 @@ import { requireActor } from "@/server/actor";
 const ROLE_LABELS: Record<string, string> = {
   org_owner: "Owner", group_admin: "Group admin", principal: "Principal", vice_principal: "Vice principal", teacher: "Teacher",
   accounts_admin: "Accounts admin", accountant: "Cashier", admissions_officer: "Admissions", parent: "Parent", platform_admin: "Platform admin",
-  school_management: "Management", front_office: "Front office",
+  school_management: "Management", front_office: "Front office", helpdesk: "Helpdesk", hr_admin: "HR", transport_manager: "Transport",
+  hostel_warden: "Hostel warden", librarian: "Librarian", student: "Student",
 };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

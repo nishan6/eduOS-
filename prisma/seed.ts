@@ -16,6 +16,9 @@ import { createExam, publishExam, saveMarks } from "@/modules/exams/service";
 import { createHomework } from "@/modules/homework/service";
 import { createEnquiry, moveStage } from "@/modules/admissions/service";
 import { sendAnnouncement } from "@/modules/announcements/service";
+import { addSlot, setEntry } from "@/modules/timetable/service";
+import { createEvent } from "@/modules/events/service";
+import { createTicket, replyToTicket } from "@/modules/tickets/service";
 import { addDays, schoolToday, toDbDate } from "@/lib/dates";
 
 const prisma = new PrismaClient();
@@ -58,7 +61,7 @@ async function main() {
 
   const schoolDefs = [
     { name: "Sunrise Public School (Demo)", code: "SPS", board: "CBSE" as const, city: "Vijayawada", hasHostel: false, brandColor: "#2563eb" },
-    { name: "Sunrise Vidyalaya (Demo)", code: "SVL", board: "AP_STATE" as const, city: "Guntur", hasHostel: true, brandColor: "#0d9488" },
+    { name: "Sunrise Vidyalaya (Demo)", code: "SVL", board: "AP_STATE" as const, city: "Guntur", hasHostel: true, brandColor: "#0d9488", gradingScale: "AP_SSC_9_POINT" as const, passPercent: 35 },
   ];
   const schools: { school: School; year: AcademicYear; sections: (Section & { grade: Grade })[] }[] = [];
   for (const d of schoolDefs) {
@@ -95,6 +98,7 @@ async function main() {
     { email: "cashier.sps@demo.eduos.test", name: "Demo Cashier SPS", role: "accountant", school: sps },
     { email: "cashier.svl@demo.eduos.test", name: "Demo Cashier SVL", role: "accountant", school: svl },
     { email: "admissions.sps@demo.eduos.test", name: "Demo Admissions SPS", role: "admissions_officer", school: sps },
+    { email: "helpdesk.sps@demo.eduos.test", name: "Demo Helpdesk SPS", role: "helpdesk", school: sps },
   ];
   const users: Record<string, string> = {};
   for (const s of staff) {
@@ -314,6 +318,54 @@ async function main() {
     schoolId: sps.school.id, audience: "SCHOOL_PARENTS", title: "Parent-teacher meeting on Saturday",
     body: "Dear parents, the term 1 parent-teacher meeting is this Saturday from 9:30 am to 12:30 pm. Please meet your child's class teacher.",
   });
+
+  // --- Timetable: the school day for both schools, a full week for SPS Class 6 ---
+  console.log("  timetable, calendar, helpdesk...");
+  const day = [
+    ["Period 1", "08:45", "09:30"], ["Period 2", "09:30", "10:15"], ["Short break", "10:15", "10:30", true], ["Period 3", "10:30", "11:15"],
+    ["Period 4", "11:15", "12:00"], ["Lunch", "12:00", "12:40", true], ["Period 5", "12:40", "13:25"], ["Period 6", "13:25", "14:10"],
+  ] as const;
+  for (const [idx, s] of schools.entries()) {
+    const p = (await loadActor(users[idx === 0 ? "principal.sps@demo.eduos.test" : "principal.svl@demo.eduos.test"]!))!;
+    for (const [label, startTime, endTime, isBreak] of day) await addSlot(p, { schoolId: s.school.id, label, startTime, endTime, isBreak: !!isBreak });
+  }
+  {
+    const p = (await loadActor(users["principal.sps@demo.eduos.test"]!))!;
+    const slots = await prisma.periodSlot.findMany({ where: { schoolId: sps.school.id, isBreak: false }, orderBy: { order: "asc" } });
+    const subj = await prisma.subject.findMany({ where: { schoolId: sps.school.id }, orderBy: { code: "asc" } });
+    const lakshmi = users["teacher.sps@demo.eduos.test"]!;
+    const maths = subj.find((x) => x.code === "MATH")!;
+    for (const [secIdx, name] of ["A", "B"].entries()) {
+      const section = sec(sps, "Class 6", name);
+      for (let d = 1; d <= 6; d++) {
+        for (const [i, slot] of slots.entries()) {
+          if (d === 6 && i >= 4) continue; // half day on Saturday
+          // Lakshmi teaches maths to 6-A in period 1 and to 6-B in period 2, so she never clashes.
+          const isMaths = i === secIdx;
+          const subject = isMaths ? maths : subj[(d + i + secIdx) % subj.length]!;
+          await setEntry(p, { sectionId: section.id, dayOfWeek: d, slotId: slot.id, subjectId: subject.id, teacherId: isMaths ? lakshmi : undefined });
+        }
+      }
+    }
+  }
+
+  // --- Calendar ---
+  for (const [idx, s] of schools.entries()) {
+    const p = (await loadActor(users[idx === 0 ? "principal.sps@demo.eduos.test" : "principal.svl@demo.eduos.test"]!))!;
+    await createEvent(p, { schoolId: s.school.id, title: "Diwali holidays", kind: "HOLIDAY", startsOn: addDays(today, 14), endsOn: addDays(today, 17) });
+    await createEvent(p, { schoolId: s.school.id, title: "Half-Yearly exams", kind: "EXAM", startsOn: addDays(today, 10), endsOn: addDays(today, 13), description: "Timetable shared by class teachers." });
+    await createEvent(p, { schoolId: s.school.id, title: "Parent-teacher meeting", kind: "MEETING", startsOn: addDays(today, 3) });
+    await createEvent(p, { schoolId: s.school.id, title: "Staff training: new report cards", kind: "MEETING", audience: "STAFF", startsOn: addDays(today, 5) });
+  }
+
+  // --- Helpdesk: one parent request, answered ---
+  {
+    const parent = (await loadActor(users["parent@demo.eduos.test"] ?? (await prisma.user.findUniqueOrThrow({ where: { email: "parent@demo.eduos.test" } })).id))!;
+    const aanya = await prisma.student.findFirstOrThrow({ where: { firstName: "Aanya", schoolId: sps.school.id } });
+    const t = await createTicket(parent, { studentId: aanya.id, category: "TRANSPORT", subject: "Bus pick-up time changed?", body: "The bus came 15 minutes early this morning. Has the pick-up time changed for our stop?" });
+    const helpdesk = (await loadActor(users["helpdesk.sps@demo.eduos.test"]!))!;
+    await replyToTicket(helpdesk, { ticketId: t.id, body: "Checking with the transport team, we'll confirm by this evening." });
+  }
 
   console.log(`Done. ${allStudents.length} demo students across ${schools.length} schools.`);
   console.log(`Demo password for every account: ${DEMO_PASSWORD}`);

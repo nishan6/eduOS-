@@ -48,6 +48,7 @@ Password for every account: `EduOS-demo-2026!`
 | accounts.sps@demo.eduos.test | Accounts administrator, SPS | Fees |
 | cashier.sps@demo.eduos.test / cashier.svl@demo.eduos.test | Cashier | Fees |
 | admissions.sps@demo.eduos.test | Admissions officer, SPS | Students |
+| helpdesk.sps@demo.eduos.test | Helpdesk, SPS | Helpdesk queue |
 | parent@demo.eduos.test | Parent with children in **both** schools (Aanya, SPS 6-A; Vivaan, SVL 7-A) | My children |
 | parent2@demo.eduos.test | Parent with one child (Kabir, SPS 6-B) | My children |
 
@@ -64,6 +65,10 @@ Password for every account: `EduOS-demo-2026!`
 9. **Report card.** As `parent`, Aanya's details → Unit Test 1 (seeded and published).
 10. **Admissions.** As `admissions.sps`, Admissions → New enquiry → move to Applied → Admit student. The new student page opens.
 11. **Notices.** As `principal.sps`, Notices → send to all parents. As `parent2`, Notices shows it.
+12. **Timetable.** As `principal.sps`, Timetable → Class 6 - A → click a cell to set subject and teacher. Try booking Demo Teacher Lakshmi into 6-B on Monday Period 1: refused. `teacher.sps` sees "My week".
+13. **Calendar.** As `principal.sps`, Calendar → add a holiday. `parent2` sees it under School calendar; staff-only events stay hidden.
+14. **Helpdesk.** As `parent2`, Help & requests → send a request. As `helpdesk.sps`, Helpdesk → open it, add an internal note and a reply, set Resolved. The parent sees the reply, not the note.
+15. **Grading.** School setup → Grading. SVL uses the AP state-board scale; new exams pick up changes, published ones never change.
 
 ## Tests
 

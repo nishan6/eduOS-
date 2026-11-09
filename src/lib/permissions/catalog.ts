@@ -33,6 +33,10 @@ export const PERMISSIONS = {
   "admissions.read": { module: "admissions", description: "View admission enquiries" },
   "admissions.manage": { module: "admissions", description: "Create enquiries, move stages, convert to students" },
   "announcements.send": { module: "communication", description: "Send announcements to families" },
+  "timetable.manage": { module: "academics", description: "Define periods and edit class timetables" },
+  "events.manage": { module: "communication", description: "Add and remove calendar events and holidays" },
+  "tickets.create": { module: "helpdesk", description: "Raise helpdesk tickets" },
+  "tickets.manage": { module: "helpdesk", description: "Work the school's helpdesk queue: reply, assign, resolve" },
   // Fees & finance
   "fees.read": { module: "fees", description: "View fee structures, invoices and payments" },
   "fees.configure": { module: "fees", description: "Create fee structures and categories" },
@@ -86,7 +90,7 @@ export const ROLE_TEMPLATES: Template[] = [
       "attendance.correct", "fees.configure", "fees.assign", "fees.discount.approve",
       "finance.ledger.read", "finance.ledger.create", "finance.ledger.update", "finance.reconcile",
       "reports.export", "ai.query", "ai.actions.approve",
-      "homework.read", "exams.read", "admissions.read", "announcements.send",
+      "homework.read", "exams.read", "admissions.read", "announcements.send", "events.manage",
     ]),
   },
   {
@@ -95,7 +99,7 @@ export const ROLE_TEMPLATES: Template[] = [
     permissions: allWith("ORGANIZATION", [
       ...SCHOOL_OPERATIONS, "settings.manage", "users.manage", "audit.read",
       "students.create", "students.update", "guardians.manage", "enrollment.manage", "reports.export", "ai.query",
-      "homework.read", "exams.read", "admissions.read", "admissions.manage", "announcements.send",
+      "homework.read", "exams.read", "admissions.read", "admissions.manage", "announcements.send", "events.manage",
     ]),
   },
   {
@@ -111,6 +115,7 @@ export const ROLE_TEMPLATES: Template[] = [
       "guardians.manage", "enrollment.manage", "attendance.mark", "attendance.correct", "fees.discount.approve",
       "reports.export", "audit.read", "ai.query", "ai.actions.approve",
       "homework.read", "homework.manage", "exams.read", "exams.manage", "marks.enter", "admissions.read", "admissions.manage", "announcements.send",
+      "timetable.manage", "events.manage", "tickets.create", "tickets.manage",
     ]),
   },
   {
@@ -119,6 +124,7 @@ export const ROLE_TEMPLATES: Template[] = [
     permissions: allWith("SCHOOL", [
       ...SCHOOL_OPERATIONS, "students.update", "attendance.mark", "attendance.correct", "ai.query",
       "homework.read", "homework.manage", "exams.read", "exams.manage", "marks.enter", "announcements.send",
+      "timetable.manage", "events.manage", "tickets.create", "tickets.manage",
     ]),
   },
   {
@@ -128,13 +134,13 @@ export const ROLE_TEMPLATES: Template[] = [
       "org.read": "SCHOOL", "academics.read": "SCHOOL",
       "students.read": "ASSIGNED", "attendance.read": "ASSIGNED", "attendance.mark": "ASSIGNED", "ai.query": "ASSIGNED",
       "homework.read": "ASSIGNED", "homework.manage": "ASSIGNED", "exams.read": "ASSIGNED", "marks.enter": "ASSIGNED",
-      "announcements.send": "ASSIGNED",
+      "announcements.send": "ASSIGNED", "tickets.create": "SCHOOL",
     },
   },
   {
     key: "admissions_officer", name: "Admissions Officer", level: "school",
     description: "Admissions pipeline and new student records.",
-    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "students.create", "guardians.manage", "enrollment.manage", "admissions.read", "admissions.manage"]),
+    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "students.create", "guardians.manage", "enrollment.manage", "admissions.read", "admissions.manage", "tickets.create"]),
   },
   {
     key: "accounts_admin", name: "Accounts Administrator", level: "school",
@@ -142,28 +148,28 @@ export const ROLE_TEMPLATES: Template[] = [
     permissions: allWith("SCHOOL", [
       "org.read", "academics.read", "students.read", "fees.read", "fees.configure", "fees.assign", "fees.collect",
       "fees.reverse", "finance.ledger.read", "finance.ledger.create", "finance.ledger.update", "finance.reconcile",
-      "reports.read", "reports.export",
+      "reports.read", "reports.export", "tickets.create",
     ]),
   },
   {
     key: "accountant", name: "Accountant / Cashier", level: "school",
     description: "Records collections and issues receipts.",
-    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "fees.read", "fees.assign", "fees.collect", "finance.ledger.read", "reports.read"]),
+    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "fees.read", "fees.assign", "fees.collect", "finance.ledger.read", "reports.read", "tickets.create"]),
   },
   {
     key: "front_office", name: "Front Office / Reception", level: "school",
     description: "Look up students and guardians, log walk-in enquiries.",
-    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "admissions.read", "admissions.manage"]),
+    permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "admissions.read", "admissions.manage", "tickets.create", "tickets.manage"]),
   },
   { key: "hr_admin", name: "HR Administrator", level: "school", description: "Staff records (HR module pending).", permissions: allWith("SCHOOL", ["org.read", "users.read"]) },
   { key: "transport_manager", name: "Transport Manager", level: "school", description: "Transport (module pending).", permissions: allWith("SCHOOL", ["org.read", "students.read"]) },
   { key: "hostel_warden", name: "Hostel Warden", level: "school", description: "Hostel (module pending).", permissions: allWith("SCHOOL", ["org.read", "students.read"]) },
   { key: "librarian", name: "Librarian", level: "school", description: "Library (module pending).", permissions: allWith("SCHOOL", ["org.read"]) },
-  { key: "helpdesk", name: "Support / Helpdesk", level: "school", description: "Tickets (module pending).", permissions: allWith("SCHOOL", ["org.read"]) },
+  { key: "helpdesk", name: "Support / Helpdesk", level: "school", description: "Works the helpdesk queue.", permissions: allWith("SCHOOL", ["org.read", "academics.read", "students.read", "tickets.create", "tickets.manage"]) },
   {
     key: "parent", name: "Parent / Guardian", level: "organization",
     description: "Sees only children explicitly linked to their guardian record.",
-    permissions: allWith("OWN_FAMILY", ["family.read", "students.read", "attendance.read", "fees.read", "homework.read", "exams.read"]),
+    permissions: allWith("OWN_FAMILY", ["family.read", "students.read", "attendance.read", "fees.read", "homework.read", "exams.read", "tickets.create"]),
   },
   {
     key: "student", name: "Student", level: "school",
